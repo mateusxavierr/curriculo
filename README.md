@@ -20,7 +20,7 @@ Busco oportunidades de estágio e projetos freelance que me permitam crescer e a
 ## 📬 Contato
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Profile-blue)](https://www.linkedin.com/in/mateus-xavier-25265a340/)  
 [![GitHub](https://img.shields.io/badge/GitHub-mateusxavierr-black)](https://github.com/mateusxavierr)  
-[![Email](https://img.shields.io/badge/Email-mateusxavier%40gmail.com-red)](mailto:mateus08x@gmail.com)
+[![Email](https://img.shields.io/badge/Email-mateus07x%40gmail.com-red)](mailto:mateus07x@gmail.com)
 
 ---
 
