@@ -1,414 +1,53 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mines — Demo estilo Stake (com Depósito Fake)</title>
-  <style>
-    :root{
-      --bg:#0f1220; /* fundo escuro elegante */
-      --panel:#171a2b;
-      --muted:#9aa4b2;
-      --text:#e7ecf3;
-      --green:#2ee59d;
-      --green-2:#1bc280;
-      --red:#ff5c7a;
-      --yellow:#ffd166;
-      --shadow:0 10px 30px rgba(0,0,0,.35);
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
-      background: radial-gradient(1200px 600px at 20% -10%, #1a2040 0%, transparent 60%),
-                  radial-gradient(1000px 500px at 90% 0%, #15203b 0%, transparent 60%),
-                  var(--bg);
-      color:var(--text);
-      line-height:1.4;
-    }
-    header{
-      position:sticky; top:0; z-index:5;
-      background:rgba(15,18,32,.6);
-      backdrop-filter: blur(10px);
-      border-bottom:1px solid rgba(255,255,255,.06);
-    }
-    .wrap{max-width:1100px; margin:0 auto; padding:16px 20px}
-    .bar{display:flex; gap:16px; align-items:center; justify-content:space-between}
-    .brand{display:flex; align-items:center; gap:12px; font-weight:800; letter-spacing:.4px}
-    .dot{width:10px; height:10px; border-radius:50%; background:var(--green); box-shadow:0 0 12px var(--green)}
-    .balance{display:flex; align-items:center; gap:10px; font-weight:700}
-    .balance .amt{font-variant-numeric:tabular-nums}
-
-    .btn{appearance:none; border:none; cursor:pointer; padding:10px 14px; border-radius:10px; font-weight:700; color:#0b1120; background:var(--green); transition:transform .04s ease, box-shadow .2s ease; box-shadow:0 6px 22px rgba(46,229,157,.35)}
-    .btn:hover{transform:translateY(-1px)}
-    .btn:active{transform:translateY(0)}
-    .btn.alt{background:#242a45; color:var(--text); box-shadow:var(--shadow)}
-    .btn.danger{background:var(--red); color:white; box-shadow:0 6px 22px rgba(255,92,122,.35)}
-    .btn.disabled, .btn:disabled{opacity:.5; cursor:not-allowed; filter:grayscale(.3)}
-
-    main{max-width:1100px; margin:24px auto; padding:0 20px; display:grid; grid-template-columns: 360px 1fr; gap:22px}
-    @media (max-width:960px){ main{grid-template-columns: 1fr; } }
-
-    .panel{background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.00)); border:1px solid rgba(255,255,255,.07); border-radius:14px; box-shadow:var(--shadow)}
-    .panel .inner{padding:18px}
-
-    .controls{display:grid; gap:14px}
-    .field{display:grid; gap:8px}
-    .field label{font-size:.9rem; color:var(--muted)}
-    .input, select{
-      width:100%; padding:12px 14px; border-radius:10px; background:#0f1329; color:var(--text);
-      border:1px solid rgba(255,255,255,.07); font-weight:700;
-    }
-    .row{display:flex; gap:10px; align-items:center}
-
-    .stats{display:grid; grid-template-columns: repeat(3,1fr); gap:10px; margin-top:8px}
-    .kpi{background:#0f1329; border:1px solid rgba(255,255,255,.07); border-radius:10px; padding:10px; text-align:center}
-    .kpi .v{font-weight:800; font-variant-numeric:tabular-nums; font-size:1.05rem}
-    .kpi .k{font-size:.8rem; color:var(--muted)}
-
-    .gridWrap{position:relative}
-    .grid{display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; padding:18px}
-    .cell{
-      position:relative; aspect-ratio:1/1; border-radius:12px; display:grid; place-items:center;
-      background:linear-gradient(180deg, #1b2040, #151934); border:1px solid rgba(255,255,255,.08);
-      box-shadow: inset 0 6px 14px rgba(255,255,255,.04), var(--shadow);
-      user-select:none; cursor:pointer; transition: transform .12s ease, background .3s ease, border-color .3s ease, filter .2s ease;
-      overflow:hidden;
-    }
-    .cell:hover{transform: translateY(-2px)}
-    .cell.hidden::after{content:''; position:absolute; inset:0; background: radial-gradient(200px 120px at 50% -30%, rgba(255,255,255,.06), transparent 60%)}
-    .cell.revealed.safe{background:linear-gradient(180deg, #1e2b3a, #142a28); border-color: rgba(46,229,157,.35)}
-    .cell.revealed.mine{background:linear-gradient(180deg, #3a1e2a, #2a141a); border-color: rgba(255,92,122,.4); animation: shake .35s ease}
-    .cell.disabled{cursor:not-allowed; filter:grayscale(.4); opacity:.9}
-    @keyframes pop{0%{transform:scale(.82)} 60%{transform:scale(1.06)} 100%{transform:scale(1)}}
-    @keyframes shake{0%,100%{transform:translateX(0)} 25%{transform:translateX(-3px)} 75%{transform:translateX(3px)}}
-    .gem{width:54%; height:54%; border-radius:10px; background:linear-gradient(135deg, rgba(46,229,157,.95), rgba(46,229,157,.6)); box-shadow:0 6px 18px rgba(46,229,157,.35); transform:rotate(45deg);}
-    .bomb{width:52%; height:52%; border-radius:50%; background: radial-gradient(circle at 30% 30%, #ffb3c2, #ff5c7a 40%, #7a1626 75%); box-shadow:0 6px 18px rgba(255,92,122,.35); position:relative}
-    .bomb::after{content:''; position:absolute; width:12%; height:26%; background:#2b2b2b; top:-8%; left:44%; border-radius:6px}
-
-    .legend{display:flex; gap:12px; align-items:center; color:var(--muted); padding:0 18px 14px}
-    .legend .dotG,.legend .dotR{width:12px; height:12px; border-radius:4px; display:inline-block}
-    .legend .dotG{background:var(--green)}
-    .legend .dotR{background:var(--red)}
-
-    /* Depósito Modal */
-    .modal{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:20}
-    .modal.show{display:flex}
-    .sheet{width:min(480px, 92vw); background:var(--panel); border:1px solid rgba(255,255,255,.08); border-radius:16px; box-shadow:var(--shadow)}
-    .sheet .inner{padding:20px}
-
-    .muted{color:var(--muted)}
-    .note{font-size:.85rem; color:var(--muted)}
-
-    /* Confetes simples */
-    .confetti{position:fixed; pointer-events:none; inset:0; overflow:hidden; z-index:30}
-    .confetti i{position:absolute; width:8px; height:14px; background:linear-gradient(180deg, #fff, #ddd); opacity:.9; transform:translateY(-100vh);}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Currículo - Mateus Xavier</title>
 </head>
 <body>
-  <header>
-    <div class="wrap bar">
-      <div class="brand"><span class="dot"></span> <span>Mines — Demo</span></div>
-      <div class="balance">
-        Saldo: <span class="amt" id="balance">R$ 0,00</span>
-        <button class="btn alt" id="btnDepositTop">Depósito</button>
-        <label class="row" style="gap:6px; font-size:.9rem; color:var(--muted)"><input id="muteToggle" type="checkbox"> Silenciar</label>
-      </div>
-    </div>
-  </header>
+    <header>
+        <h1>Mateus Xavier</h1>
+        <img src="https://media.licdn.com/dms/image/v2/D4D03AQGdSunrlosmfA/profile-displayphoto-scale_400_400/B4DZjzBAr9GkAk-/0/1756423787017?e=1759968000&v=beta&t=gQvXTK-mJWd1gQesVoGad_R4MxCPqdowLYmsAg_j330" alt="Foto de Mateus Xavier" style="width: 200px; height: 200px;">
+    </header>
 
-  <main>
-    <!-- Painel de controle -->
-    <section class="panel">
-      <div class="inner controls">
-        <div class="field">
-          <label for="bet">Aposta (R$)</label>
-          <input class="input" id="bet" type="number" step="0.10" min="0.10" value="5.00">
-        </div>
-        <div class="field">
-          <label for="mines">Nº de Minas</label>
-          <input class="input" id="mines" type="range" min="1" max="24" value="3" oninput="minesVal.textContent=this.value">
-          <div class="row" style="justify-content:space-between"><span class="muted">1</span><strong><span id="minesVal">3</span> minas</strong><span class="muted">24</span></div>
-        </div>
-        <div class="row">
-          <button class="btn" id="btnStart">Iniciar Rodada</button>
-          <button class="btn danger" id="btnCashout" disabled>Encerrar (Cashout)</button>
-        </div>
+    <section>
+    <h2>Informações Pessoais</h2>
+    <p><strong>Email:</strong> mateus07x@gmail.com</p>
+    <p><strong>Telefone:</strong> (81) 99194‑5763</p>
+    <p><strong>GitHub:</strong> <a href="https://github.com/mateusxavierr" target="_blank">Mateus Xavier no GitHub</a></p>
+    <p><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/mateus-xavier-25265a340/" target="_blank">Mateus Xavier no LinkedIn</a></p>
+    <p><strong>Cidade:</strong> Recife ‑ PE</p>
+    <hr>
+</section>
 
-        <div class="stats">
-          <div class="kpi"><div class="v" id="kpiMult">1.00x</div><div class="k">Multiplicador</div></div>
-          <div class="kpi"><div class="v" id="kpiSafe">0</div><div class="k">Acertos</div></div>
-          <div class="kpi"><div class="v" id="kpiNext">—</div><div class="k">Chance da próxima jogada</div></div>
-        </div>
-        <p class="note">Regras: escolha a aposta, defina as minas e clique em <strong>Iniciar</strong>. Cada casa segura aumenta o multiplicador. Se encontrar uma mina, perde a aposta. Você pode <strong>Encerrar</strong> a qualquer momento para receber a aposta × multiplicador.</p>
-      </div>
+    <section>
+        <h2>Vida Acadêmica</h2>
+        <p>Cursando Inteligência Artificial - CIn UFPE</p>
+        <p>Cursando Sistemas de Informação - Cesar School</p>
+        <hr>
     </section>
 
-    <!-- Grade do jogo -->
-    <section class="panel gridWrap">
-      <div class="inner">
-        <div class="legend"><span class="dotG"></span> seguro <span class="dotR" style="margin-left:12px"></span> mina</div>
-        <div class="grid" id="grid"></div>
-      </div>
+    <section>
+        <h2>Experiência Profissional</h2>
+        <p><strong>Mercado de Trabalho</strong> — Ainda não tenho nenhuma experiência no mercado de trabalho.</p>
+        <p><strong>Projetos próprios</strong> — Criador do P.O.L.A.R., um assistente pessoal modular inspirado no J.A.R.V.I.S., com foco em produtividade, automações e comandos de voz. Desenvolvido em Python, utiliza IA local, transcrição por voz, sistema de memória e integrações com o macOS.</p>
+        <hr>
     </section>
-  </main>
 
-  <!-- Modal de Depósito -->
-  <div class="modal" id="depositModal" role="dialog" aria-modal="true">
-    <div class="sheet">
-      <div class="inner">
-        <h2>Depósito (fake)</h2>
-        <p class="note">Defina qualquer valor para jogar. Este é um simulador local — não há dinheiro real envolvido.</p>
-        <div class="field" style="margin-top:10px">
-          <label for="depositInput">Valor do depósito</label>
-          <input class="input" id="depositInput" type="number" min="0" step="0.10" value="100.00">
-        </div>
-        <div class="row" style="margin-top:14px; justify-content:flex-end">
-          <button class="btn alt" id="btnCancelDeposit">Cancelar</button>
-          <button class="btn" id="btnConfirmDeposit">Depositar</button>
-        </div>
-      </div>
-    </div>
-  </div>
+    <section>
+        <h2>Cursos e Certificações</h2>
+          <li>Curso de Programação em Python - Luiz Otávio Miranda (Udemy)</li>
+          <li>The Complete JavaScript Course – Jonas Schmedtmann (Udemy)</li>
+          <li>Introdução à Programação com Lua - Laboratório do Pardall (Youtube)</li>
+      <hr>
+    </section>
 
-  <!-- Confete container -->
-  <div class="confetti" id="confetti"></div>
-
-  <script>
-    // ======== Util ========
-    const fmtBR = new Intl.NumberFormat('pt-BR',{style:'currency', currency:'BRL'});
-    const $ = sel => document.querySelector(sel);
-    const $$ = sel => Array.from(document.querySelectorAll(sel));
-
-    // ======== Áudio (WebAudio) ========
-    const AudioKit = (()=>{
-      let ctx; let muted=false;
-      function ensure(){ if(!ctx) ctx = new (window.AudioContext||window.webkitAudioContext)(); }
-      function tone({freq=440, type='sine', dur=0.12, vol=0.2}){
-        if(muted) return; ensure();
-        const o=ctx.createOscillator(); const g=ctx.createGain();
-        o.type=type; o.frequency.value=freq; g.gain.value=vol;
-        o.connect(g).connect(ctx.destination);
-        o.start(); o.stop(ctx.currentTime+dur);
-        // envelope
-        g.gain.setValueAtTime(0, ctx.currentTime);
-        g.gain.linearRampToValueAtTime(vol, ctx.currentTime+0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+dur);
-      }
-      function click(){ tone({freq:600, type:'triangle', dur:.09, vol:.15}); }
-      function safe(){ tone({freq:780, type:'sine', dur:.12, vol:.18}); tone({freq:1040, type:'sine', dur:.10, vol:.12}); }
-      function bomb(){ tone({freq:160, type:'sawtooth', dur:.22, vol:.25}); tone({freq:90, type:'square', dur:.28, vol:.18}); }
-      function cash(){ tone({freq:900, type:'triangle', dur:.12, vol:.18}); setTimeout(()=>tone({freq:1200, type:'triangle', dur:.12, vol:.18}), 110); setTimeout(()=>tone({freq:1500, type:'triangle', dur:.14, vol:.18}), 220); }
-      function setMuted(m){ muted = m; }
-      return {click, safe, bomb, cash, setMuted};
-    })();
-
-    // ======== Estado do Jogo ========
-    const TILES = 25; // grade 5x5
-    let state = {
-      balance: 0,
-      bet: 5,
-      mines: 3,
-      picks: 0,
-      board: [], // true = mina
-      revealed: new Set(),
-      started:false,
-      ended:false,
-      multiplier: 1,
-    };
-
-    // Persistência simples
-    function save(){ localStorage.setItem('mines_demo_balance', String(state.balance)); }
-    function load(){ const b = parseFloat(localStorage.getItem('mines_demo_balance')||'0'); if(!isNaN(b)) state.balance=b; }
-
-    // ======== UI refs ========
-    const elBal = $('#balance');
-    const elBet = $('#bet');
-    const elMines = $('#mines');
-    const elStart = $('#btnStart');
-    const elCash = $('#btnCashout');
-    const elMult = $('#kpiMult');
-    const elSafe = $('#kpiSafe');
-    const elNext = $('#kpiNext');
-    const grid = $('#grid');
-
-    // Depósito
-    const modal = $('#depositModal');
-    const btnDepositTop = $('#btnDepositTop');
-    const depositInput = $('#depositInput');
-    const btnConfirmDeposit = $('#btnConfirmDeposit');
-    const btnCancelDeposit = $('#btnCancelDeposit');
-
-    // Mute
-    const muteToggle = $('#muteToggle');
-    muteToggle.addEventListener('change', e=> AudioKit.setMuted(e.target.checked));
-
-    // ======== Helpers ========
-    function updateBalance(){ elBal.textContent = fmtBR.format(state.balance); }
-    function setMultiplier(x){ state.multiplier = x; elMult.textContent = x.toFixed(2)+ 'x'; }
-    function chanceNext(){ // (seguras restantes) / (casas restantes)
-      const safeLeft = (TILES - state.mines) - state.picks;
-      const tilesLeft = TILES - state.picks;
-      if(tilesLeft<=0) return 0;
-      return safeLeft / tilesLeft;
-    }
-    function fairMultiplierAfter(picks){ // produto ( (T - i) / (T - M - i) )
-      let m = 1;
-      for(let i=0;i<picks;i++){
-        m *= ( (TILES - i) / ( (TILES - state.mines) - i ) );
-      }
-      return m; // sem house edge (justo teórico)
-    }
-    function shuffleMines(){
-      const idx = [...Array(TILES).keys()];
-      for(let i=idx.length-1;i>0;i--){ const j=(Math.random()* (i+1))|0; [idx[i], idx[j]]=[idx[j], idx[i]]; }
-      const minesIdx = new Set(idx.slice(0, state.mines));
-      state.board = Array.from({length:TILES}, (_,i)=> minesIdx.has(i));
-    }
-
-    function resetRoundUI(){
-      grid.innerHTML='';
-      for(let i=0;i<TILES;i++){
-        const c=document.createElement('button');
-        c.className='cell hidden';
-        c.dataset.i=i;
-        c.addEventListener('click', onPick);
-        grid.appendChild(c);
-      }
-      setMultiplier(1);
-      elSafe.textContent='0';
-      elNext.textContent='—';
-      elCash.disabled=true;
-    }
-
-    function endRoundUI(disable=true){
-      $$('.cell').forEach(c=>{ c.classList.add('disabled'); c.disabled=true; });
-      if(disable) elCash.disabled=true;
-      elStart.disabled=false;
-    }
-
-    function revealAll(){
-      $$('.cell').forEach((c, i)=>{
-        if(state.board[i]){
-          c.classList.remove('hidden'); c.classList.add('revealed','mine');
-          c.innerHTML = '<div class="bomb"></div>';
-        } else if(state.revealed.has(i)){
-          // já mostrado seguro
-        } else {
-          c.classList.add('disabled');
-        }
-      })
-    }
-
-    // ======== Interações ========
-    function startRound(){
-      if(state.started && !state.ended){ return; }
-      const bet = parseFloat(elBet.value||'0');
-      if(!(bet>0)) return alert('Informe uma aposta válida.');
-      if(bet>state.balance) return alert('Saldo insuficiente. Faça um depósito.');
-
-      state.bet = bet;
-      state.mines = parseInt(elMines.value,10);
-      state.picks = 0; state.revealed.clear(); state.started=true; state.ended=false;
-      shuffleMines();
-      resetRoundUI();
-
-      // debita aposta no início, como nos jogos reais
-      state.balance -= bet; updateBalance();
-      elStart.disabled=true; elCash.disabled=true;
-      AudioKit.click();
-    }
-
-    function onPick(e){
-      const cell = e.currentTarget; const i = parseInt(cell.dataset.i,10);
-      if(state.ended || !state.started) return;
-      if(state.revealed.has(i)) return;
-
-      // revelar
-      cell.classList.remove('hidden');
-      cell.classList.add('revealed');
-
-      if(state.board[i]){
-        // Bomba 💥
-        cell.classList.add('mine');
-        cell.innerHTML = '<div class="bomb"></div>';
-        AudioKit.bomb();
-        revealAll();
-        state.started=false; state.ended=true;
-        elNext.textContent = '—';
-        endRoundUI();
-      } else {
-        // Seguro 💎
-        state.revealed.add(i); state.picks++;
-        cell.classList.add('safe');
-        cell.innerHTML = '<div class="gem"></div>';
-        cell.style.animation='pop .32s ease';
-        AudioKit.safe();
-        elSafe.textContent = String(state.picks);
-        // atualiza mult e chance
-        const mult = fairMultiplierAfter(state.picks);
-        setMultiplier(mult);
-        const chance = chanceNext();
-        elNext.textContent = (chance*100).toFixed(1)+'%';
-        elCash.disabled = false; // pode encerrar a partir do 1º acerto
-      }
-    }
-
-    function cashout(){
-      if(!state.started || state.ended || state.picks===0) return;
-      const payout = state.bet * state.multiplier;
-      state.balance += payout; updateBalance(); save();
-      elCash.disabled=true;
-      state.started=false; state.ended=true;
-      endRoundUI(false);
-      confettiBurst();
-      AudioKit.cash();
-    }
-
-    // ======== Depósito Fake ========
-    function openDeposit(){ depositInput.value = Math.max(0, state.balance===0?100:0).toFixed(2); modal.classList.add('show'); }
-    function closeDeposit(){ modal.classList.remove('show'); }
-    function confirmDeposit(){
-      const v = parseFloat(depositInput.value||'0');
-      if(!(v>=0)) return; state.balance += v; updateBalance(); save(); closeDeposit();
-    }
-
-    btnDepositTop.addEventListener('click', openDeposit);
-    btnCancelDeposit.addEventListener('click', closeDeposit);
-    btnConfirmDeposit.addEventListener('click', confirmDeposit);
-
-    // ======== Confete simples ========
-    const conf = $('#confetti');
-    function confettiBurst(){
-      const N = 60;
-      for(let i=0;i<N;i++){
-        const p = document.createElement('i');
-        const x = Math.random()*100; const d = 1200 + Math.random()*800; const r= 8 + Math.random()*10;
-        p.style.left = x+'vw';
-        p.style.background = `hsl(${Math.random()*360}, 90%, 60%)`;
-        p.style.width = Math.random()>0.5? '6px':'9px';
-        p.style.height = r+'px';
-        p.animate([
-          { transform:'translateY(-100vh) rotate(0deg)', opacity:1 },
-          { transform:`translateY(${110+Math.random()*10}vh) rotate(${Math.random()*720-360}deg)`, opacity:.9 }
-        ], {duration:d, easing:'cubic-bezier(.17,.67,.3,1)'});
-        conf.appendChild(p);
-        setTimeout(()=> p.remove(), d+200);
-      }
-    }
-
-    // ======== Ligações ========
-    elStart.addEventListener('click', startRound);
-    elCash.addEventListener('click', cashout);
-
-    // ======== Boot ========
-    function boot(){
-      load(); updateBalance();
-      resetRoundUI();
-      if(state.balance <= 0){ setTimeout(openDeposit, 350); }
-    }
-    boot();
-  </script>
+    <section>
+        <h2>Idiomas</h2>
+          <li>Português — Nativo</li>
+          <li>Inglês — Avançado</li>
+          <li>Alemão — Básico (estudando)</li>
+    </section>
 </body>
 </html>
